@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+
+# Production build installer outputs
+dist/
+build/
+*.exe
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# OS & Environment junk
+.env
+.DS_Store
+npm-debug.log*

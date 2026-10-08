@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GST Invoice - Painting Contractor Kerala</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .invoice-box { max-width: 1000px; margin: auto; border: 1px solid #ccc; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 8px; text-align: center; }
+        input { width: 100%; border: none; text-align: center; }
+        button { margin: 5px; padding: 10px; }
+        .right { text-align: right; }
+        .header { display: flex; justify-content: space-between; }
+    </style>
+</head>
+
+<body>
+
+<div class="invoice-box" id="invoice">
+
+    <div class="header">
+        <div>
+            <h2>Olive Painting Works</h2>
+            <p>Biju T.J. Thekkekkara House Pathamuttom P.O., Kottayam Mob: 9995104051, 9544629104 E-mail: bijutkra@gmail.com</p>
+            <p>GSTIN: 32ABCDE1234F1Z5</p>
+        </div>
+        <img src="C:\Users\LOQ\Downloads\WhatsApp Image 2026-04-12 at 5.06.02 PM.jpeg">
+    </div>
+
+    <hr>
+
+    <p>Invoice No: <span id="invoiceNo"></span></p>
+    <p>Date: <span id="date"></span></p>
+
+    <p>Customer Name: <input type="text"></p>
+    <p>Site Location: <input type="text"></p>
+
+    <table id="itemsTable">
+        <tr>
+            <th>Description</th>
+            <th>Area (sq.ft)</th>
+            <th>Labour Rate</th>
+            <th>Labour Amount</th>
+            <th>Material Qty</th>
+            <th>Material Rate</th>
+            <th>Material Amount</th>
+            <th>GST %</th>
+            <th>Total</th>
+        </tr>
+    </table>
+
+    <button onclick="addItem()">Add Item</button>
+    <button onclick="calculate()">Calculate</button>
+
+    <h3 class="right">Subtotal: ₹ <span id="subtotal">0</span></h3>
+    <h3 class="right">CGST: ₹ <span id="cgst">0</span></h3>
+    <h3 class="right">SGST: ₹ <span id="sgst">0</span></h3>
+    <h2 class="right">Grand Total: ₹ <span id="total">0</span></h2>
+
+    <br><br>
+
+    <p>Contractor Signature: ____________________</p>
+
+</div>
+
+<button onclick="window.print()">Print Invoice</button>
+<button onclick="downloadPDF()">Download PDF</button>
+
+<script>
+
+document.getElementById("date").innerText = new Date().toLocaleDateString();
+document.getElementById("invoiceNo").innerText = "KER-INV-" + Date.now();
+
+function addItem() {
+    let table = document.getElementById("itemsTable");
+    let row = table.insertRow();
+
+    for (let i = 0; i < 9; i++) {
+        let cell = row.insertCell(i);
+        cell.innerHTML = "<input type='text'>";
+    }
+}
+
+function calculate() {
+    let table = document.getElementById("itemsTable");
+    let subtotal = 0;
+    let totalGST = 0;
+
+    for (let i = 1; i < table.rows.length; i++) {
+        let cells = table.rows[i].cells;
+
+        let area = parseFloat(cells[1].children[0].value) || 0;
+        let labourRate = parseFloat(cells[2].children[0].value) || 0;
+        let materialQty = parseFloat(cells[4].children[0].value) || 0;
+        let materialRate = parseFloat(cells[5].children[0].value) || 0;
+        let gst = parseFloat(cells[7].children[0].value) || 0;
+
+        let labourAmount = area * labourRate;
+        let materialAmount = materialQty * materialRate;
+
+        let total = labourAmount + materialAmount;
+        let gstAmount = total * gst / 100;
+
+        cells[3].children[0].value = labourAmount.toFixed(2);
+        cells[6].children[0].value = materialAmount.toFixed(2);
+        cells[8].children[0].value = total.toFixed(2);
+
+        subtotal += total;
+        totalGST += gstAmount;
+    }
+
+    let cgst = totalGST / 2;
+    let sgst = totalGST / 2;
+    let grandTotal = subtotal + totalGST;
+
+    document.getElementById("subtotal").innerText = subtotal.toFixed(2);
+    document.getElementById("cgst").innerText = cgst.toFixed(2);
+    document.getElementById("sgst").innerText = sgst.toFixed(2);
+    document.getElementById("total").innerText = grandTotal.toFixed(2);
+}
+
+function downloadPDF() {
+    let element = document.getElementById("invoice");
+
+    let opt = {
+        margin: 0.5,
+        filename: "Kerala_Invoice_" + Date.now() + ".pdf",
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+}
+
+</script>
+
+</body>
+</html>

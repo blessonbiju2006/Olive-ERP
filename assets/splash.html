@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Olive Loading...</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      width: 500px;
+      height: 500px;
+      background: transparent;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Container Card */
+    .splash-card {
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle at 50% 35%, #2a3a22 0%, #162012 100%);
+      border-radius: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+                  inset 0 1px 1px rgba(255, 255, 255, 0.12);
+      position: relative;
+      animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Logo Image Wrapper */
+    .logo-wrapper {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 30px;
+      animation: floatLogo 3s ease-in-out infinite alternate 0.6s;
+    }
+
+    .logo-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+    }
+
+    /* Metallic Gold Shimmer Sweep across emblem */
+    .logo-wrapper::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -150%;
+      width: 70%;
+      height: 160%;
+      background: linear-gradient(
+        115deg,
+        transparent 0%,
+        rgba(235, 205, 130, 0.15) 40%,
+        rgba(255, 240, 190, 0.55) 50%,
+        rgba(235, 205, 130, 0.15) 60%,
+        transparent 100%
+      );
+      transform: rotate(25deg);
+      animation: goldShimmer 2.5s infinite 0.7s ease-in-out;
+    }
+
+    /* Typography Styling */
+    .brand-title {
+      color: #e2c78a;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 22px;
+      opacity: 0;
+      animation: textSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+    }
+
+    .brand-subtitle {
+      color: #7d9073;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      opacity: 0;
+      animation: textSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+    }
+
+    /* Gold Progress Bar */
+    .progress-container {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      margin-top: 32px;
+      overflow: hidden;
+      opacity: 0;
+      animation: fadeIn 0.4s ease 0.5s forwards;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #b39243, #f5e7b2);
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(243, 229, 173, 0.4);
+      animation: fillProgress 2.2s ease-in-out forwards;
+    }
+
+    /* Animations */
+    @keyframes cardAppear {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes textSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatLogo {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(-5px); }
+    }
+
+    @keyframes goldShimmer {
+      0% { left: -150%; }
+      35%, 100% { left: 150%; }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes fillProgress {
+      0% { width: 0%; }
+      50% { width: 60%; }
+      85% { width: 88%; }
+      100% { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="splash-card">
+    <div class="logo-wrapper">
+  <img src="icons/icon.ico" alt="Olive Emblem" />
+</div>
+    <div class="brand-title">OLIVE</div>
+    <div class="brand-subtitle">Quotations & Billing</div>
+    
+    <div class="progress-container">
+      <div class="progress-bar"></div>
+    </div>
+  </div>
+
+</body>
+</html>

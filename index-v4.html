@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com assets: data:;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olive ERP - Professional Quotation & Payment Voucher</title>
+    <link rel="stylesheet" href="css/style-v4.css">
+    
+    <!-- PRINT & PAGE BREAK OPTIMIZATION STYLES -->
+    <style>
+        @media print {
+            /* Hide non-printable items */
+            .no-print, .toolbar, .search-section, .saved-section, 
+            .history-section, .customers-section, .dashboard-section, 
+            .quick-actions-section, .app-footer, #loadingOverlay,
+            .action-col, .delete-btn, .app-module-nav, .voucher-form-panel {
+                display: none !important;
+            }
+
+            .header-container {
+                width: 100% !important;
+                margin-bottom: 8mm !important;
+            }
+
+            .header-banner {
+                width: 100% !important;
+                height: auto !important;
+                max-height: 140px !important;
+                object-fit: contain !important;
+            }
+
+            /* Reset page margins and layout defaults */
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+
+            html, body {
+                width: 100%;
+                height: auto;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            /* Enforce layout for invoice wrapper */
+            .application, #invoice {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* Prevent elements from breaking mid-section */
+            .header-container, 
+            .doc-recipient-section, 
+            .items-section, 
+            .terms-section, 
+            .declaration-section, 
+            .signature-footer-grid {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* Table rendering optimizations */
+            table {
+                page-break-inside: auto;
+                table-layout: fixed !important;
+                width: 100% !important;
+            }
+
+            tr, td, th {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* Optimize heights to prevent overflow */
+            .doc-recipient-section {
+                margin-bottom: 10px !important;
+            }
+
+            .terms-section {
+                margin-top: 10px !important;
+                font-size: 11px;
+            }
+
+            /* Flatten inputs to print as clean text */
+            input[type="text"].doc-input,
+            input[type="text"].banner-title-input,
+            input[type="text"].words-input {
+                border: none !important;
+                background: transparent !important;
+            }
+
+            /* Payment Voucher Specific Print Rules */
+            .voucher-layout {
+                display: block !important;
+            }
+
+            .voucher-preview-panel {
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            .voucher-document-page {
+                position: relative !important;
+                min-height: 297mm !important;
+                height: 297mm !important;
+                box-shadow: none !important;
+                width: 100% !important;
+            }
+
+            .voucher-footer-signature {
+                position: absolute !important;
+                bottom: 15mm !important;
+                right: 15mm !important;
+            }
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+</head>
+
+<body>
+
+    <!-- TOP MODULE NAVIGATION SWITCHER -->
+    <div class="app-module-nav no-print">
+        <button class="module-tab-btn active" id="tab-btn-quotation" onclick="switchAppModule('quotation')">📄 Quotation</button>
+        <button class="module-tab-btn" id="tab-btn-voucher" onclick="switchAppModule('voucher')">💳 Payment Voucher</button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="loading-box">
+            <div class="loader"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <!-- MODULE 1: QUOTATION SYSTEM -->
+    <div id="quotationModuleView" class="module-view">
+        <div class="application">
+
+            <!-- TOOLBAR -->
+            <div class="toolbar no-print">
+                <button onclick="typeof saveQuotation === 'function' ? saveQuotation() : saveOrUpdateQuotation()">💾 Save</button>
+                <button onclick="newQuotation()">➕ New</button>
+                <button onclick="loadQuotationFromDB()">📂 Load</button>
+                <button onclick="deleteQuotation()">🗑 Delete</button>
+                <button onclick="downloadPDF()">📄 PDF</button>
+                <button onclick="window.print()">🖨 Print</button>
+            </div>
+
+            <!-- QUOTATION DOCUMENT -->
+            <div id="invoice" class="invoice">
+                <!-- COMPANY HEADER -->
+                <div class="header-container">
+                    <img src="./assets/images/olive-header.png" alt="Olive Header" class="header-banner" onerror="this.style.display='none'">
+                </div>
+
+                <!-- RECIPIENT & SITE SECTION -->
+                <div class="doc-recipient-section">
+                    <p class="to-label">To</p>
+                    <div class="recipient-fields">
+                        <input type="text" id="customerName" class="doc-input bold-input" placeholder="[Client / Manager Name]">
+                        <input type="text" id="companyName" class="doc-input" placeholder="[Company Name]">
+                        <input type="text" id="Address" class="doc-input" placeholder="[Address Line]">
+                    </div>
+                    <div class="site-field">
+                        <label>Proposed site:</label>
+                        <input type="text" id="site" class="doc-input" placeholder="[Site / Project Name]">
+                    </div>
+                </div>
+
+                <!-- MAIN TABLE SECTION -->
+                <section class="items-section">
+                    <table id="itemsTable" class="green-themed-table">
+                        <colgroup>
+                            <col style="width: 3%;">  <!-- Sl -->
+                            <col style="width: 20%;"> <!-- Description -->
+                            <col style="width: 53%;"> <!-- Work Specification -->
+                            <col style="width: 7%;">  <!-- Sqft -->
+                            <col style="width: 7%;">  <!-- Rs. -->
+                            <col style="width: 10%;"> <!-- Amount -->
+                            <col style="width: 0%; display: none;" class="no-print action-col">
+                        </colgroup>
+                        <thead>
+                            <tr class="table-banner-row">
+                                <th colspan="7">
+                                    <input type="text" id="workTitleInput" value="QUOTATION FOR PAINTING WORK" class="banner-title-input">
+                                </th>
+                            </tr>
+                            <tr class="table-subheaders">
+                                <th>Sl</th>
+                                <th>Description</th>
+                                <th>Work Specification</th>
+                                <th>Sqft</th>
+                                <th>Rs.</th>
+                                <th>Amount</th>
+                                <th class="no-print action-col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic Rows Inserted Here -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="labour-row">
+                                <td colspan="5" class="labour-label-td">
+                                    <input type="text" id="labourLabelInput" class="labour-label-input" value="Labour only">
+                                </td>
+                                <td colspan="2" class="labour-amount">
+                                    <span id="total">0.00</span>
+                                </td>
+                            </tr>
+                            
+                            <tr class="summary-extra-row">
+                                <td colspan="5" class="summary-label">Discount:</td>
+                                <td colspan="2" class="summary-value-td">
+                                    <input type="text" id="discountInput" class="summary-input discount-text" placeholder="0.00" oninput="calculateGrandTotal()">
+                                </td>
+                            </tr>
+                            <tr class="summary-extra-row grand-total-border">
+                                <td colspan="5" class="summary-label bold-label">Grand Total:</td>
+                                <td colspan="2" class="summary-value-td">
+                                    <input type="text" id="grandTotalInput" class="summary-input grand-total-text" placeholder="0.00">
+                                </td>
+                            </tr>
+                            <tr class="words-row">
+                                <td colspan="7">
+                                    <div class="words-container">
+                                        <label for="amountInWordsInput" class="words-label">Amount in words:</label>
+                                        <input type="text" id="amountInWordsInput" class="words-input" placeholder="[Enter amount in words]">
+                                    </div>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </section>
+
+                <!-- TABLE BUTTONS (Hidden on print) -->
+                <div class="table-buttons no-print">
+                    <button class="green-btn" onclick="addItem()">➕ Add Item</button>
+                    <button class="blue-btn" onclick="calculate()">🧮 Calculate</button>
+                </div>
+
+                <!-- TERMS & CONDITIONS SECTION -->
+                <div class="terms-section">
+                    <h4 class="terms-title">Terms and conditions:</h4>
+                    <ul class="terms-list">
+                        <li>40% advance payment shall be made when materials are delivered to the site.</li>
+                        <li>Weekly labour charges shall be paid as per the agreed schedule.</li>
+                        <li>Water and electricity shall be provided by the client during the execution of the work.</li>
+                        <li>The quotation includes labour, materials and final cleaning unless stated otherwise.</li>
+                        <li>Any additional work requested after approval will be charged separately.</li>
+                        <li>This quotation is valid for 30 days from the quotation date.</li>
+                    </ul>
+                    <div class="Bank-details-section">
+                        <h4 class="terms-title">Bank Details:</h4>
+                        <ul class="terms-list">
+                            <li>Bank: ABC Bank, Branch: Wakandan</li>
+                            <li>Account Number: xxxxxxxxxxxxxx</li>
+                            <li>IFSC Code: CNRB0000000</li>
+                        </ul>
+                        
+                        <p class="terms-note">We assure that all work will be carried out professionally using quality materials and skilled workmanship. We appreciate the opportunity to work with you and thank you for choosing Olive Interiors.</p>
+                    </div>
+
+                    <!-- DECLARATION & SIGNATURE -->
+                    <div class="declaration-section">
+                        <p>I hereby agree that above work will be done professionally and responsibly.</p>
+                        <p class="yours-faithfully">Yours faithfully</p>
+                    </div>
+
+                    <div class="signature-footer-grid">
+                        <div class="date-place-block">
+                            <input type="text" id="place" class="doc-input" placeholder="[Place]">
+                            <p>Date: <span id="signatureDate">DD.MM.YYYY</span></p>
+                        </div>
+                        <div class="signature-block">
+                            <img src="assets/images/signature.png" alt="Signature" id="signatureImage" style="max-width: 100px; height: auto;" onerror="this.style.display='none'">
+                            <p class="sig-name"><strong>Owner.</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH PANEL -->
+            <section class="search-section card no-print">
+                <div class="search-header">
+                    <h2>Search Quotations</h2>
+                </div>
+                <div class="search-box search-panel mt-10">
+                    <input type="text" id="searchText" placeholder="Search by Quotation No, Customer Name or Phone">
+                    <button class="blue-btn" onclick="searchQuotations()">🔍 Search</button>
+                    <button class="green-btn" onclick="loadQuotations()">📂 Show All</button>
+                </div>
+            </section>
+
+            <!-- SAVED QUOTATIONS -->
+            <section class="saved-section card no-print">
+                <div class="section-header">
+                    <h2>Saved Quotations</h2>
+                </div>
+                <div id="quotationList" class="mt-10">
+                    <p class="empty-message">No quotations found.</p>
+                </div>
+            </section>
+
+            <!-- CUSTOMER HISTORY -->
+            <section class="history-section card no-print">
+                <div class="section-header">
+                    <h2>Customer History</h2>
+                </div>
+                <div id="customerHistory" class="mt-10">
+                    <p class="empty-message">Select a customer to view quotation history.</p>
+                </div>
+            </section>
+
+            <!-- CUSTOMERS -->
+            <section class="customers-section card no-print">
+                <div class="section-header flex-between">
+                    <h2>Customers</h2>
+                    <button class="green-btn" onclick="loadCustomers()">🔄 Refresh</button>
+                </div>
+                <div id="customersList" class="mt-10">
+                    <p class="empty-message">No customers loaded.</p>
+                </div>
+            </section>
+
+            <!-- DASHBOARD -->
+            <section class="dashboard-section card no-print">
+                <div class="section-header flex-between mb-20">
+                    <h2>Dashboard</h2>
+                    <button class="blue-btn" onclick="loadDashboard()">🔄 Refresh Dashboard</button>
+                </div>
+                <div id="dashboard" class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="dashboard-icon">📄</div>
+                        <div class="dashboard-content">
+                            <h3>Total Quotations</h3>
+                            <h1 id="totalQuotations">0</h1>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="dashboard-icon">💰</div>
+                        <div class="dashboard-content">
+                            <h3>Total Revenue</h3>
+                            <h1>₹ <span id="totalRevenue" class="amount-field">0.00</span></h1>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- QUICK ACTIONS -->
+            <section class="quick-actions-section card no-print">
+                <h2>Quick Actions</h2>
+                <div class="quick-actions">
+                    <button class="green-btn" onclick="newQuotation()">➕ New Quotation</button>
+                    <button class="blue-btn" onclick="loadQuotations()">📂 View Quotations</button>
+                    <button class="green-btn" onclick="loadCustomers()">👥 Customers</button>
+                    <button class="blue-btn" onclick="window.print()">🖨 Print</button>
+                </div>
+            </section>
+
+            <!-- APPLICATION FOOTER -->
+            <footer class="app-footer no-print text-center p-20 text-muted">
+                <p>Olive ERP © 2026</p>
+                <p>Interior & Painting Quotation Management System</p>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- MODULE 2: PAYMENT VOUCHER SYSTEM -->
+    <div id="voucherModuleView" class="module-view" style="display: none;">
+        <div class="toolbar no-print">
+            <button onclick="newVoucher()">➕ New</button>
+            <button onclick="saveVoucherToDB()">💾 Save Voucher</button>
+            <button onclick="loadVouchersFromDB()">📂 Load Saved</button>
+            <button onclick="window.print()">🖨 Print / PDF</button>
+        </div>
+
+        <div class="voucher-layout">
+            <!-- Left Controls Panel -->
+            <aside class="voucher-form-panel no-print">
+                <div class="panel-title" style="font-weight: bold; font-size: 16px; margin-bottom: 15px;">Voucher Details</div>
+                
+                <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div class="form-group" style="flex:1;">
+                        <label style="display: block; font-size: 12px; margin-bottom: 4px;">Date</label>
+                        <input type="date" id="input-date" class="form-control" style="width: 100%; padding: 6px;" oninput="syncForm()">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label style="display: block; font-size: 12px; margin-bottom: 4px;">Ref No.</label>
+                        <input type="text" id="input-ref" class="form-control" style="width: 100%; padding: 6px;" placeholder="REF-001" oninput="syncForm()">
+                    </div>
+                </div>
+
+                <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div class="form-group" style="flex:1;">
+                        <label style="display: block; font-size: 12px; margin-bottom: 4px;">Voucher No.</label>
+                        <input type="text" id="input-voucher" class="form-control" style="width: 100%; padding: 6px;" placeholder="PV-1001" oninput="syncForm()">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label style="display: block; font-size: 12px; margin-bottom: 4px;">Bill No.</label>
+                        <input type="text" id="input-bill" class="form-control" style="width: 100%; padding: 6px;" placeholder="INV-554" oninput="syncForm()">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 4px;">Party Name & Address</label>
+                    <textarea id="input-party" class="form-control" style="width: 100%; padding: 6px;" rows="2" oninput="syncForm()"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 4px;">Site Location</label>
+                    <input type="text" id="input-site" class="form-control" style="width: 100%; padding: 6px;" oninput="syncForm()">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 4px;">Mobile Number</label>
+                    <input type="text" id="input-mobile" class="form-control" style="width: 100%; padding: 6px;" oninput="syncForm()">
+                </div>
+
+                <button class="blue-btn" style="width: 100%; margin-top: 15px; padding: 10px;" onclick="addItemRow()">+ Add Item Row</button>
+            </aside>
+
+            <!-- Right Live Preview Panel -->
+            <main class="voucher-preview-panel">
+                <div class="voucher-document-page">
+                    <div class="header-image-container">
+                        <img src="./assets/images/olive-header.png" alt="Olive Header">
+                    </div>
+
+                    <div class="voucher-doc-content">
+                        <div class="doc-title" style="text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 15px;">PAYMENT VOUCHER</div>
+
+                        <table class="grid-table">
+                            <tr>
+                                <td class="label-cell" style="font-weight: bold; width: 15%;">Date:</td>
+                                <td class="val-cell" id="doc-date" style="width: 35%;" contenteditable="true"></td>
+                                <td class="label-cell" style="font-weight: bold; width: 15%;">Ref No.:</td>
+                                <td class="val-cell" id="doc-ref" style="width: 35%;" contenteditable="true"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell" style="font-weight: bold;">Voucher No:</td>
+                                <td class="val-cell" id="doc-voucher" contenteditable="true"></td>
+                                <td class="label-cell" style="font-weight: bold;">Bill No.:</td>
+                                <td class="val-cell" id="doc-bill" contenteditable="true"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell" style="font-weight: bold;">Party Name & Address:</td>
+                                <td colspan="3" id="doc-party" style="height: 40px;" contenteditable="true"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell" style="font-weight: bold;">Site:</td>
+                                <td colspan="3" id="doc-site" contenteditable="true"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell" style="font-weight: bold;">Mobile:</td>
+                                <td colspan="3" id="doc-mobile" contenteditable="true"></td>
+                            </tr>
+                        </table>
+
+                        <table class="grid-table" style="margin-top: 15px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 10%;">Sl.No.</th>
+                                    <th style="width: 46%;">Description</th>
+                                    <th style="width: 20%;">Area/sqft</th>
+                                    <th style="width: 20%;">Amount</th>
+                                    <th style="width: 4%;" class="btn-remove"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="items-container"></tbody>
+                            <tfoot>
+                                <!-- Row 1: Note + Total Amount -->
+                                <tr>
+                                    <td colspan="3">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;">
+                                            <input type="text" id="voucher-note-input" class="row-textarea" style="border: 1px dashed #ccc; padding: 4px; font-size: 12px; width: 60%;" placeholder="Note / Payment Details (e.g., Paid in Cash / Advance)">
+                                            <div id="input-total-label" class="editable-cell row-textarea" contenteditable="true" style="text-align: right; font-weight: bold; border: none; flex: 1;">Total</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" id="input-total-amount" class="row-textarea" style="text-align: right; font-weight: bold; border: none; width: 100%;" value="0">
+                                    </td>
+                                    <td class="btn-remove"></td>
+                                </tr>
+
+                                <!-- Row 2: Bottom Text Box directly beneath Amount column -->
+                                <tr>
+                                    <td colspan="3" style="text-align: right; font-weight: 600; font-size: 12px; color: #555;">
+                                        Remarks / Words:
+                                    </td>
+                                    <td>
+                                        <input type="text" id="voucher-bottom-amount-note" class="row-textarea" style="text-align: right; border: 1px solid #ddd; padding: 4px; font-size: 11px; width: 100%; box-sizing: border-box;" placeholder="e.g. Rupees in words / Balance">
+                                    </td>
+                                    <td class="btn-remove"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="voucher-footer-signature">
+                            <div class="signature-box">
+                                <div class="signature-img-wrapper" style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                                    <img src="assets/images/signature.png" alt="Authorized Signature" id="doc-signature-img" style="max-height: 60px;">
+                                </div>
+                                <div class="signature-line" style="border-top: 1px solid #000; margin: 5px 0;"></div>
+                                <div class="signature-label" style="font-size: 12px; font-weight: 600;">Owner</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT FILES -->
+    <script src="js/app.js"></script>
+    <script src="js/quotation.js"></script>
+    <script src="js/voucher.js"></script>
+
+    <!-- RICH TEXT FORMATTING SHORTCUTS LISTENER -->
+    <script>
+        document.addEventListener('keydown', (event) => {
+            const isControlOrCmd = event.ctrlKey || event.metaKey;
+
+            if (isControlOrCmd) {
+                const key = event.key.toLowerCase();
+                const activeElem = document.activeElement;
+
+                // Execute shortcuts inside contenteditable cells
+                if (activeElem && activeElem.isContentEditable) {
+                    if (key === 'b') {
+                        event.preventDefault();
+                        document.execCommand('bold', false, null);
+                    } else if (key === 'i') {
+                        event.preventDefault();
+                        document.execCommand('italic', false, null);
+                    } else if (key === 'u') {
+                        event.preventDefault();
+                        document.execCommand('underline', false, null);
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+{
+  "name": "gst-billing-app",
+  "version": "1.0.0",
+  "description": "GST Billing & Quotation App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "electron-builder install-app-deps",
+    "dist": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.olive.gstbilling",
+    "productName": "Olive Quotations & Billing",
+    "directories": {
+      "output": "dist"
+    },
+   "files": [
+  "**/*",
+  "assets/**/*"
+],
+    "asarUnpack": [
+      "**/node_modules/sqlite3/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Olive Quotations & Billing",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    }
+  }
+}
