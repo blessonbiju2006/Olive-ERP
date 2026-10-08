@@ -1,10 +1,13 @@
 # Node dependencies
 node_modules/
 
-# Production build installer outputs
+# Production build installer outputs & compiled folders
 dist/
 build/
 *.exe
+*-win32-x64/
+PaintingBilling-win32-x64/
+gst-billing-app-win32-x64/
 
 # Local database files
 *.db
